@@ -5,6 +5,7 @@ defmodule Httpie.Handler do
       |> rewrite_path
       |> log 
       |> route 
+      |> track
       |> format_response
   end
 
@@ -23,6 +24,13 @@ defmodule Httpie.Handler do
       }
   end
 
+  def track(%{status: 404, path: path} = conv) do
+    IO.puts "Warning: #{path} is on the loose!"
+    conv
+  end
+
+  def track(conv), do: conv
+
   def rewrite_path(%{path: "/users"} = conv) do
     %{conv | path: "/members"}
   end
@@ -31,23 +39,19 @@ defmodule Httpie.Handler do
 
   def log(conv), do: IO.inspect conv
 
-  def route(conv) do
-    route(conv, conv.method, conv.path)
-  end
-
-  def route(conv, "GET", "/products/" <> id) do
+  def route(%{method: "GET", path: "/products" <> id} = conv) do
     %{ conv | status: 200, res_body: "Product #{id}"}
   end
 
-  def route(conv, "GET", "/products") do
+  def route(%{method: "GET", path: "/products"} = conv) do
     %{conv | status: 200, res_body: "Product1, Product2, Product2"}
   end
 
-  def route(conv, "GET", "/members") do
+  def route(%{method: "GET", path: "/members"} = conv) do
     %{conv | status: 200, res_body: "Member1, Member2, Member2"} 
   end
 
-  def route(conv, _method, path) do
+  def route(%{path: path} = conv) do
     %{ conv | status: 404, res_body: "No #{path} here!"}
   end
 
@@ -74,7 +78,7 @@ defmodule Httpie.Handler do
 end
 
 request = """
-GET /members HTTP/1.1
+GET /membersfsdf HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
