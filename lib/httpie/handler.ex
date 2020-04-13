@@ -28,6 +28,10 @@ defmodule Httpie.Handler do
     route(conv, conv.method, conv.path)
   end
 
+  def route(conv, "GET", "/products/" <> id) do
+    %{ conv | status: 200, res_body: "Product #{id}"}
+  end
+
   def route(conv, "GET", "/products") do
     %{conv | status: 200, res_body: "Product1, Product2, Product2"}
   end
@@ -63,7 +67,7 @@ defmodule Httpie.Handler do
 end
 
 request = """
-GET /products HTTP/1.1
+GET /products/5 HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
