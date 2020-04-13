@@ -2,6 +2,7 @@ defmodule Httpie.Handler do
   def handle(request) do
     request 
       |> parse
+      |> rewrite_path
       |> log 
       |> route 
       |> format_response
@@ -22,6 +23,12 @@ defmodule Httpie.Handler do
       }
   end
 
+  def rewrite_path(%{path: "/users"} = conv) do
+    %{conv | path: "/members"}
+  end
+
+  def rewrite_path(conv), do: conv
+
   def log(conv), do: IO.inspect conv
 
   def route(conv) do
@@ -36,8 +43,8 @@ defmodule Httpie.Handler do
     %{conv | status: 200, res_body: "Product1, Product2, Product2"}
   end
 
-  def route(conv, "GET", "/users") do
-    %{conv | status: 200, res_body: "User1, User2, User3"} 
+  def route(conv, "GET", "/members") do
+    %{conv | status: 200, res_body: "Member1, Member2, Member2"} 
   end
 
   def route(conv, _method, path) do
@@ -67,7 +74,7 @@ defmodule Httpie.Handler do
 end
 
 request = """
-GET /products/5 HTTP/1.1
+GET /members HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
