@@ -1,11 +1,14 @@
-require Logger
-
 defmodule Httpie.Handler do
 
   @moduledoc """
     HTTP Server
   """
 
+  import Httpie.Plugins, 
+    only: [track: 1, rewrite_path: 1, log: 1]
+
+  import Httpie.Parser, 
+    only: [parse: 1]
   @pages_path Path.expand("../pages", __DIR__)
 
   @doc "Handles the request"
@@ -17,40 +20,6 @@ defmodule Httpie.Handler do
       |> route 
       |> track
       |> format_response
-  end
-
-  def parse(request) do
-    [method, path, _] = 
-      request 
-      |> String.split("\n") 
-      |> List.first
-      |> String.split(" ")
-    
-    %{
-      method: method, 
-      path: path, 
-      res_body: "",
-      status: nil
-      }
-  end
-
-  def track(%{status: 404, path: path} = conv) do
-    IO.puts "Warning: #{path} is on the loose!"
-    conv
-  end
-
-  def track(conv), do: conv
-
-  def rewrite_path(%{path: "/users"} = conv) do
-    %{conv | path: "/members"}
-  end
-
-  def rewrite_path(conv), do: conv
-
-  def log(conv) do
-    Logger.info "Logging something"
-    
-    conv
   end
 
   def route(%{method: "GET", path: "/products" <> id} = conv) do
