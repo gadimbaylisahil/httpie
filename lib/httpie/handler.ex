@@ -49,6 +49,11 @@ defmodule Httpie.Handler do
     %{ conv | status: 200, res_body: "Product #{id}"}
   end
 
+  def route(%{method: "GET", path: "/about"} = conv) do
+    File.read("lib/pages/about.html")
+    |> handle_file(conv)
+  end
+
   def route(%{method: "GET", path: "/products"} = conv) do
     %{conv | status: 200, res_body: "Product1, Product2, Product2"}
   end
@@ -59,6 +64,18 @@ defmodule Httpie.Handler do
 
   def route(%{path: path} = conv) do
     %{ conv | status: 404, res_body: "No #{path} here!"}
+  end
+
+  def handle_file({:ok, content}, conv) do
+    %{conv | status: 200, res_body: content}
+  end
+
+  def handle_file({:error, :enoent}, conv) do
+    %{conv | status: 404, res_body: "File not found!"}
+  end
+
+  def handle_file({:error, reason}, conv) do
+    %{conv | status: 500, res_body: "Error: #{reason}."}
   end
 
   def format_response(conv) do
@@ -84,7 +101,7 @@ defmodule Httpie.Handler do
 end
 
 request = """
-GET /membersfsdf HTTP/1.1
+GET /about HTTP/1.1
 Host: example.com
 User-Agent: ExampleBrowser/1.0
 Accept: */*
