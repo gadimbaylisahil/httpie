@@ -1,6 +1,14 @@
 require Logger
 
 defmodule Httpie.Handler do
+
+  @moduledoc """
+    HTTP Server
+  """
+
+  @pages_path Path.expand("../pages", __DIR__)
+
+  @doc "Handles the request"
   def handle(request) do
     request 
       |> parse
@@ -50,7 +58,9 @@ defmodule Httpie.Handler do
   end
 
   def route(%{method: "GET", path: "/about"} = conv) do
-    File.read("lib/pages/about.html")
+    @pages_path
+    |> Path.join("about.html")
+    |> File.read
     |> handle_file(conv)
   end
 
