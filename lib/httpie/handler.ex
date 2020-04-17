@@ -1,3 +1,5 @@
+require Logger
+
 defmodule Httpie.Handler do
   def handle(request) do
     request 
@@ -37,7 +39,11 @@ defmodule Httpie.Handler do
 
   def rewrite_path(conv), do: conv
 
-  def log(conv), do: IO.inspect conv
+  def log(conv) do
+    Logger.info "Logging something"
+    
+    conv
+  end
 
   def route(%{method: "GET", path: "/products" <> id} = conv) do
     %{ conv | status: 200, res_body: "Product #{id}"}
