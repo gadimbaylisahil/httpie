@@ -1,4 +1,7 @@
 defmodule Httpie.Parser do
+  
+  alias Httpie.Conv, as: Conv
+
   def parse(request) do
     [method, path, _] = 
       request 
@@ -6,11 +9,9 @@ defmodule Httpie.Parser do
       |> List.first
       |> String.split(" ")
     
-    %{
+    %Conv{
       method: method, 
-      path: path, 
-      res_body: "",
-      status: nil
+      path: path
       }
   end
 end
