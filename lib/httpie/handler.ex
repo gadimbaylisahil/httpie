@@ -23,10 +23,6 @@ defmodule Httpie.Handler do
       |> format_response
   end
 
-  def route(%Conv{method: "GET", path: "/products" <> id} = conv) do
-    %{ conv | status: 200, res_body: "Product #{id}"}
-  end
-
   def route(%Conv{method: "GET", path: "/about"} = conv) do
     @pages_path
     |> Path.join("about.html")
@@ -34,8 +30,21 @@ defmodule Httpie.Handler do
     |> handle_file(conv)
   end
 
+  def route(%Conv{method: "GET", path: "/products" <> id} = conv) do
+    %{ conv | status: 200, res_body: "Product #{id}"}
+  end
+
   def route(%Conv{method: "GET", path: "/products"} = conv) do
     %{conv | status: 200, res_body: "Product1, Product2, Product2"}
+  end
+
+  def route(%Conv{method: "POST", path: "/products"} = conv) do
+    params = %{ "name" => "Product1", "type" => "Plastic"}
+
+    %{ conv | 
+       status: 201, 
+       res_body: "Created a #{params["type"]} product named #{params["name"]}"
+     }
   end
 
   def route(%Conv{method: "GET", path: "/members"} = conv) do
@@ -77,7 +86,57 @@ Accept: */*
 
 """
 
-response = 
-  Httpie.Handler.handle(request)
+response = Httpie.Handler.handle(request)
+
+IO.puts response
+
+request = """
+GET /products HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Httpie.Handler.handle(request)
+
+IO.puts response
+
+request = """
+GET /members HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Httpie.Handler.handle(request)
+
+IO.puts response
+
+request = """
+GET /products/1 HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+
+"""
+
+response = Httpie.Handler.handle(request)
+
+IO.puts response
+
+request = """
+POST /products HTTP/1.1
+Host: example.com
+User-Agent: ExampleBrowser/1.0
+Accept: */*
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 21
+
+name=Product1&type=Plastic
+"""
+
+response = Httpie.Handler.handle(request)
 
 IO.puts response
