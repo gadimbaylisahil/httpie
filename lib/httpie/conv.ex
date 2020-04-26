@@ -1,5 +1,9 @@
 defmodule Httpie.Conv do 
-  defstruct method: "", path: "", res_body: "", status: nil
+  defstruct method: "", 
+            path: "", 
+            res_body: "", 
+            status: nil, 
+            params: %{}
   
   def full_status(conv) do
     "#{conv.status} #{status_reason(conv.status)}"
