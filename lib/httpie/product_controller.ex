@@ -12,7 +12,9 @@ defmodule Httpie.ProductController do
   end
 
   def show(conv, %{"id" => id}) do
-     %{conv | status: 200, res_body: "Showing Product #{id}"}
+    product = Shop.get_product(id)
+
+     %{conv | status: 200, res_body: "Showing Product #{product.name}"}
   end
 
   def create(conv, %{"name" => name, "type" => type}) do
