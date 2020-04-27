@@ -12,6 +12,8 @@ defmodule Httpie.Handler do
   @pages_path Path.expand("../pages", __DIR__)
 
   alias Httpie.Conv, as: Conv
+  alias Httpie.ProductController, as: ProductController
+  
   @doc "Handles the request"
   def handle(request) do
     request 
@@ -30,21 +32,20 @@ defmodule Httpie.Handler do
     |> handle_file(conv)
   end
 
-  def route(%Conv{method: "GET", path: "/products" <> id} = conv) do
-    %{ conv | status: 200, res_body: "Product #{id}"}
+  def route(%Conv{method: "GET", path: "/products"} = conv) do
+    ProductController.index(conv)
   end
 
-  def route(%Conv{method: "GET", path: "/products"} = conv) do
-    %{conv | status: 200, res_body: "Product1, Product2, Product2"}
+  def route(%Conv{method: "GET", path: "/products/" <> id} = conv) do
+    params = Map.put(conv.params, "id", id)
+  
+    ProductController.show(conv, params)
   end
 
   def route(%Conv{method: "POST", path: "/products"} = conv) do
     params = %{ "name" => "Product1", "type" => "Plastic"}
 
-    %{ conv | 
-       status: 201, 
-       res_body: "Created a #{params["type"]} product named #{params["name"]}"
-     }
+    ProductController.create(conv, params)
   end
 
   def route(%Conv{method: "GET", path: "/members"} = conv) do
