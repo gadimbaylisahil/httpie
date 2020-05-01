@@ -4,23 +4,23 @@ defmodule Httpie.Handler do
     HTTP Server
   """
 
-  import Httpie.Plugins, 
+  import Httpie.Plugins,
     only: [track: 1, rewrite_path: 1, log: 1]
 
-  import Httpie.Parser, 
+  import Httpie.Parser,
     only: [parse: 1]
   @pages_path Path.expand("../pages", __DIR__)
 
   alias Httpie.Conv, as: Conv
   alias Httpie.ProductController, as: ProductController
-  
+
   @doc "Handles the request"
   def handle(request) do
-    request 
+    request
       |> parse
       |> rewrite_path
-      |> log 
-      |> route 
+      |> log
+      |> route
       |> track
       |> format_response
   end
@@ -38,7 +38,7 @@ defmodule Httpie.Handler do
 
   def route(%Conv{method: "GET", path: "/products/" <> id} = conv) do
     params = Map.put(conv.params, "id", id)
-  
+
     ProductController.show(conv, params)
   end
 
@@ -49,7 +49,7 @@ defmodule Httpie.Handler do
   end
 
   def route(%Conv{method: "GET", path: "/members"} = conv) do
-    %{conv | status: 200, res_body: "Member1, Member2, Member2"} 
+    %{conv | status: 200, res_body: "Member1, Member2, Member2"}
   end
 
   def route(%Conv{path: path} = conv) do

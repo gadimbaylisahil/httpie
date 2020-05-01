@@ -1,0 +1,7 @@
+<h1>All The Products!</h1>
+
+<ul>
+  <%= for product <- products do %>
+    <li><%= product.name %> - <%= product.type %></li>
+  <% end %>
+</ul>
