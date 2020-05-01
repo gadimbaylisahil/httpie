@@ -3,20 +3,20 @@ defmodule Httpie.ProductController do
 
   @products_template Path.expand("../templates", __DIR__)
 
-  def index(conv) do
+  defp render(conv, template, bindings) do
     content = @products_template
-      |> Path.join("index.eex")
-      |> EEx.eval_file(products: Shop.list_products)
+      |> Path.join(template)
+      |> EEx.eval_file(bindings)
 
-    %{conv | status: 200, res_body: content}
+      %{conv | status: 200, res_body: content}
+  end
+
+  def index(conv) do
+    render(conv, "index.eex", products: Shop.list_products)
   end
 
   def show(conv, %{"id" => id}) do
-    content = @products_template
-      |> Path.join("show.eex")
-      |> EEx.eval_file(product: Shop.get_product(id))
-
-     %{conv | status: 200, res_body: content}
+    render(conv, "show.eex", product: Shop.get_product(id))
   end
 
   def create(conv, %{"name" => name, "type" => type}) do
