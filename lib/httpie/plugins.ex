@@ -1,25 +1,27 @@
-require Logger
-
 defmodule Httpie.Plugins do
 
-  alias Httpie.Conv, as: Conv
+  alias Httpie.Conv
 
+  @doc "Logs 404 requests"
   def track(%Conv{status: 404, path: path} = conv) do
-    IO.puts "Warning: #{path} is on the loose!"
+    if Mix.env != :test do
+      IO.puts "Warning: #{path} is on the loose!"
+    end
     conv
   end
 
   def track(%Conv{} = conv), do: conv
 
-  def rewrite_path(%Conv{path: "/users"} = conv) do
-    %{conv | path: "/members"}
+  def rewrite_path(%Conv{path: "/wildlife"} = conv) do
+    %{ conv | path: "/wildthings" }
   end
 
   def rewrite_path(%Conv{} = conv), do: conv
 
   def log(%Conv{} = conv) do
-    Logger.info "Logging something"
-    
+    if Mix.env == :dev do
+      IO.inspect conv
+    end
     conv
   end
 end

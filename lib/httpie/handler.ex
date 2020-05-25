@@ -1,143 +1,103 @@
 defmodule Httpie.Handler do
 
-  @moduledoc """
-    HTTP Server
-  """
+  @moduledoc "Handles HTTP requests."
 
-  import Httpie.Plugins,
-    only: [track: 1, rewrite_path: 1, log: 1]
+  alias Httpie.Conv
+  alias Httpie.BearController
 
-  import Httpie.Parser,
-    only: [parse: 1]
-  @pages_path Path.expand("../pages", __DIR__)
+  @pages_path Path.expand("../../pages", __DIR__)
 
-  alias Httpie.Conv, as: Conv
-  alias Httpie.ProductController, as: ProductController
+  import Httpie.Plugins, only: [rewrite_path: 1, log: 1, track: 1]
+  import Httpie.Parser, only: [parse: 1]
 
-  @doc "Handles the request"
+  @doc "Transforms the request into a response."
   def handle(request) do
     request
-      |> parse
-      |> rewrite_path
-      |> log
-      |> route
-      |> track
-      |> format_response
+    |> parse
+    |> rewrite_path
+    |> log
+    |> route
+    |> track
+    |> format_response
+  end
+
+  def route(%Conv{method: "POST", path: "/pledges"} = conv) do
+    Httpie.PledgeController.create(conv, conv.params)
+  end
+
+  def route(%Conv{method: "GET", path: "/pledges"} = conv) do
+    Httpie.PledgeController.index(conv)
+  end
+
+  def route(%Conv{ method: "GET", path: "/sensors" } = conv) do
+    sensor_data = Httpie.SensorServer.get_sensor_data()
+
+    %{ conv | status: 200, resp_body: inspect sensor_data }
+  end
+
+  def route(%Conv{ method: "GET", path: "/kaboom" }) do
+    raise "Kaboom!"
+  end
+
+  def route(%Conv{ method: "GET", path: "/hibernate/" <> time } = conv) do
+    time |> String.to_integer |> :timer.sleep
+
+    %{ conv | status: 200, resp_body: "Awake!" }
+  end
+
+  def route(%Conv{ method: "GET", path: "/wildthings" } = conv) do
+    %{ conv | status: 200, resp_body: "Bears, Lions, Tigers" }
+  end
+
+  def route(%Conv{ method: "GET", path: "/api/bears" } = conv) do
+    Httpie.Api.BearController.index(conv)
+  end
+
+  def route(%Conv{ method: "GET", path: "/bears" } = conv) do
+    BearController.index(conv)
+  end
+
+  def route(%Conv{ method: "GET", path: "/bears/" <> id } = conv) do
+    params = Map.put(conv.params, "id", id)
+    BearController.show(conv, params)
+  end
+
+  def route(%Conv{method: "POST", path: "/bears"} = conv) do
+    BearController.create(conv, conv.params)
   end
 
   def route(%Conv{method: "GET", path: "/about"} = conv) do
-    @pages_path
-    |> Path.join("about.html")
-    |> File.read
-    |> handle_file(conv)
+      @pages_path
+      |> Path.join("about.html")
+      |> File.read
+      |> handle_file(conv)
   end
 
-  def route(%Conv{method: "GET", path: "/products"} = conv) do
-    ProductController.index(conv)
-  end
-
-  def route(%Conv{method: "GET", path: "/products/" <> id} = conv) do
-    params = Map.put(conv.params, "id", id)
-
-    ProductController.show(conv, params)
-  end
-
-  def route(%Conv{method: "POST", path: "/products"} = conv) do
-    params = %{ "name" => "Product1", "type" => "Plastic"}
-
-    ProductController.create(conv, params)
-  end
-
-  def route(%Conv{method: "GET", path: "/members"} = conv) do
-    %{conv | status: 200, res_body: "Member1, Member2, Member2"}
-  end
-
-  def route(%Conv{path: path} = conv) do
-    %{ conv | status: 404, res_body: "No #{path} here!"}
+  def route(%Conv{ path: path } = conv) do
+    %{ conv | status: 404, resp_body: "No #{path} here!"}
   end
 
   def handle_file({:ok, content}, conv) do
-    %{conv | status: 200, res_body: content}
+    %{ conv | status: 200, resp_body: content }
   end
 
   def handle_file({:error, :enoent}, conv) do
-    %{conv | status: 404, res_body: "File not found!"}
+    %{ conv | status: 404, resp_body: "File not found!" }
   end
 
   def handle_file({:error, reason}, conv) do
-    %{conv | status: 500, res_body: "Error: #{reason}."}
+    %{ conv | status: 500, resp_body: "File error: #{reason}" }
   end
 
   def format_response(%Conv{} = conv) do
     """
-      HTTP/1.1 #{Conv.full_status(conv)}
-      Content-Type: text/html
-      Content-Length: #{String.length(conv.res_body)}
-
-      #{conv.res_body}
+    HTTP/1.1 #{Conv.full_status(conv)}\r
+    Content-Type: #{conv.resp_content_type}\r
+    Content-Length: #{String.length(conv.resp_body)}\r
+    \r
+    #{conv.resp_body}
     """
   end
+
 end
 
-request = """
-GET /about HTTP/1.1
-Host: example.com
-User-Agent: ExampleBrowser/1.0
-Accept: */*
-
-"""
-
-response = Httpie.Handler.handle(request)
-
-IO.puts response
-
-request = """
-GET /products HTTP/1.1
-Host: example.com
-User-Agent: ExampleBrowser/1.0
-Accept: */*
-
-"""
-
-response = Httpie.Handler.handle(request)
-
-IO.puts response
-
-request = """
-GET /members HTTP/1.1
-Host: example.com
-User-Agent: ExampleBrowser/1.0
-Accept: */*
-
-"""
-
-response = Httpie.Handler.handle(request)
-
-IO.puts response
-
-request = """
-GET /products/1 HTTP/1.1
-Host: example.com
-User-Agent: ExampleBrowser/1.0
-Accept: */*
-
-"""
-
-response = Httpie.Handler.handle(request)
-
-IO.puts response
-
-request = """
-POST /products HTTP/1.1
-Host: example.com
-User-Agent: ExampleBrowser/1.0
-Accept: */*
-Content-Type: application/x-www-form-urlencoded
-Content-Length: 21
-
-name=Product1&type=Plastic
-"""
-
-response = Httpie.Handler.handle(request)
-
-IO.puts response
